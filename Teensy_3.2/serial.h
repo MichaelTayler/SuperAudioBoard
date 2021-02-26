@@ -1,3 +1,9 @@
+// Sine output test MCVE for SuperAudioBoard and Teensy 3.2.  
+// Frequency limited to 48 kHz subharmonics.
+// Upload via Arduino IDE and Teensyduino
+// CS4272 I2C and I2S code based on https://github.com/whollender/SuperAudioBoard
+// Written by Michael Tayler.  Updated 26/02/2021.
+
 // To start the SuperAudioBoard output/acquisition loop, send character "A" over serial port.
 
 byte serialData[4];
