@@ -5,11 +5,11 @@
 // Written by Michael Tayler.  Updated 26/02/2021.
 
 // Rx data in upper 24 bits of 32-bit int.  Reading converts uint32_t to int32_t (keeping sign intact).  Then we need to
-  // right shift by 8 bits to get the 24 bits we want, in the right place (assuming the compile will do an arithmetic shift.
-  // i.e. new bits is same as previous MSB to sign extend). 
+// right shift by 8 bits to get the 24 bits we want, in the right place (assuming the compile will do an arithmetic shift.
+// i.e. new bits is same as previous MSB to sign extend). 
 
-  // For CS4272 (uC i2s interface in slave mode) not sure about initialization sequence 
-  // (i2s interface first, or setup cs4272 first). For now, start with codec (start interface clocks first)
+// For CS4272 (uC i2s interface in slave mode) not sure about initialization sequence 
+// (i2s interface first, or setup cs4272 first). For now, start with codec (start interface clocks first)
 
 // Section 8.1 Mode Control
 #define CODEC_MODE_CONTROL							(uint8_t)0x01
@@ -59,9 +59,9 @@
 #define CODEC_MODE_CTRL2_POWER_DOWN			(uint8_t)0x01
 
 // Section 8.8 Chip ID
-#define CODEC_CHIP_ID								(uint8_t)0x08
+#define CODEC_CHIP_ID								    (uint8_t)0x08
 #define CODEC_CHIP_ID_PART							(uint8_t)(((x) & 0x0F) << 4)
-#define CODEC_CHIP_ID_REV							(uint8_t)(((x) & 0x0F) << 0)
+#define CODEC_CHIP_ID_REV						  	(uint8_t)(((x) & 0x0F) << 0)
 
 // Setup I2C address for codec
 #define CODEC_ADDR 0x10 
@@ -84,12 +84,10 @@ uint8_t codec_read(uint8_t reg){
 // Setup Initial Codec
 void codec_init(){
   i2c_init();  delay(100);  // Initialize I2C
-  // Setup Reset pin (GPIO) Teensy pin 2 = Port D0
-  PORTD_PCR0 = PORT_PCR_MUX(1);  // Setup Pin muxing for GPIO (alt 1)
-  GPIOD_PDDR |= (1 << 0);  // Setup pin for digital out
-  GPIOD_PCOR = (1 << 0);  // Make sure pin is cleared (still driving reset)
-  delay(1);  
-  GPIOD_PSOR = (1 << 0);  // Release Reset (drive pin high)
+  pinMode(2,OUTPUT); // Setup Reset pin (GPIO) Teensy pin 2  
+  digitalWrite(2,LOW);
+  delay(1);
+  digitalWrite(2,HIGH);
   delay(2);  // Wait for ~2-5ms (1-10 ms time window spec'd in datasheet)
   
   // Set power down and control port enable as spec'd in the datasheet for control port mode
@@ -102,8 +100,8 @@ void codec_init(){
   delay(10);
 
   // ADC right justify 24-bit data 
-//  codec_write(CODEC_ADC_CTRL, CODEC_ADC_CTRL_SER_FORMAT); // Right-justified 24-bit data
-//  delay(10);
+  //  codec_write(CODEC_ADC_CTRL, CODEC_ADC_CTRL_SER_FORMAT); // Right-justified 24-bit data
+  //  delay(10);
   
   codec_write(CODEC_MODE_CTRL2, CODEC_MODE_CTRL2_CTRL_PORT_EN);  // Release power down bit to start up codec
   delay(10);                                                     // Wait for everything to come up
