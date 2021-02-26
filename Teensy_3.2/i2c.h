@@ -1,3 +1,9 @@
+// Sine output test MCVE for SuperAudioBoard and Teensy 3.2.  
+// Frequency limited to 48 kHz subharmonics.
+// Upload via Arduino IDE and Teensyduino
+// CS4272 I2C and I2S code based on https://github.com/whollender/SuperAudioBoard
+// Written by Michael Tayler.  Updated 26/02/2021.
+
 static uint8_t i2c_rx_err = 0;     // I2C read error storage
 static uint8_t i2c_init_flag = 0;  // I2C initialization state
 
