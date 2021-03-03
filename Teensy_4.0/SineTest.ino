@@ -1,8 +1,13 @@
-// Sine output test MCVE for SuperAudioBoard and Teensy 4.0.  
+// Sine output test for SuperAudioBoard and Teensy 4.0.  
 // Frequency limited to 48 kHz subharmonics.
 // Upload via Arduino IDE and Teensyduino
 // CS4272 I2C and I2S code based on https://github.com/whollender/SuperAudioBoard
-// Written by Michael Tayler.  Updated 26/02/2021.
+// Written by Michael Tayler.  Updated 03/03/2021.
+
+//TO DO: 
+// - Document I2S pinout differences between T3.2 and T4.0
+// - New KiCAD file for SuperAudioBoard + T4.0
+//
 
 enum State {State_Idle, State_ISR, State_Transfer, State_Flush};
 State state = State_Idle;
@@ -11,7 +16,7 @@ volatile unsigned int counter;
 // volatile byte data1[16384], data2[16384], data3[16384];
 volatile int32_t ina[256];
 
-#include "i2c.h"
+#include "Wire.h"
 #include "i2s.h"
 #include "cs4272.h"
 #include "sine.h"
@@ -19,7 +24,6 @@ volatile int32_t ina[256];
 
 void setup(){
   Serial_init();
-  i2c_init();   delay(10);  
   codec_init(); delay(10);    // Initialize CS4272
   i2s_init();   delay(10);    // Initialize I2S subsystem 
 }
@@ -45,16 +49,16 @@ void loop(){
   }
 }
 
-void i2s0_tx_isr(void){
+void i2s1_tx_isr(void){
 // ----------------------------------------------------------------------
 // -- Write 1.5 kHz sine wave to DAC (= 48 kHz / 32 points per period) --
 // ----------------------------------------------------------------------
-    I2S0_TDR0 = 0;                                  // OUT_B
-    I2S0_TDR0 = (sine32_ref[(counter) & 0xFF])/2;   // OUT_A
+    I2S1_TDR0 = 0;                                  // OUT_B
+    I2S1_TDR0 = (sine32_ref[(counter) & 0xFF])/2;   // OUT_A
 
 //  Data acquisition: (TODO)
-//  ina[counter] = (I2S0_RDR0);                     // IN_B
-//  ina[counter] = (I2S0_RDR0);                     // IN_A
+//  ina[counter] = (I2S1_RDR0);                     // IN_B
+//  ina[counter] = (I2S1_RDR0);                     // IN_A
 
 //  data1[datapts] = (((uint32_t)ina[counter])>>24)&0xFF;
 //  data2[datapts] = (((uint32_t)ina[counter])>>16)&0xFF;
@@ -62,7 +66,7 @@ void i2s0_tx_isr(void){
 // ----------------------------------------------------------------------
 
   counter++;
-  if(counter % 2 == 0){datapts++;}  // ADC sampling at subharmonic of ISR frequency.  Change modulo integer  
+  if(counter % 2 == 0){datapts++;}  // Downsampling at subharmonic of fmod.  Change modulo integer  
   if(datapts >= dataLength){i2s_stop(); state=State_Transfer;}  // if max points reached, stop
 }
 
