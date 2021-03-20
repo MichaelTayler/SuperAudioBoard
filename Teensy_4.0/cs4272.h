@@ -2,7 +2,7 @@
 // Frequency limited to 48 kHz subharmonics.
 // Upload via Arduino IDE and Teensyduino
 // CS4272 and I2S code based on https://github.com/whollender/SuperAudioBoard
-// Written by Michael Tayler.  Updated 03/03/2021.
+// Written by Michael Tayler.  Updated 19/03/2021.
 
   // Rx data in upper 24 bits of 32-bit int.  Reading converts uint32_t to int32_t (keeping sign intact).  Then we need to
   // right shift by 8 bits to get the 24 bits we want, in the right place (assuming the compile will do an arithmetic shift.
