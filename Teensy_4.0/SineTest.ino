@@ -2,19 +2,17 @@
 // Frequency limited to 48 kHz subharmonics.
 // Upload via Arduino IDE and Teensyduino
 // CS4272 I2C and I2S code based on https://github.com/whollender/SuperAudioBoard
-// Written by Michael Tayler.  Updated 03/03/2021.
+// Written by Michael Tayler and RF William Hollender.  Updated 19/03/2021.
 
 //TO DO: 
 // - Document I2S pinout differences between T3.2 and T4.0
 // - New KiCAD file for SuperAudioBoard + T4.0
-//
 
-enum State {State_Idle, State_ISR, State_Transfer, State_Flush};
+enum State {State_Idle, State_Acquire, State_ISR, State_Transfer, State_Flush};
 State state = State_Idle;
-
+byte debug=0;
 volatile unsigned int counter;
-// volatile byte data1[16384], data2[16384], data3[16384];
-volatile int32_t ina[256];
+volatile int32_t rawa, ina[100000];
 
 #include "Wire.h"
 #include "i2s.h"
@@ -26,12 +24,39 @@ void setup(){
   Serial_init();
   codec_init(); delay(10);    // Initialize CS4272
   i2s_init();   delay(10);    // Initialize I2S subsystem 
+  if(debug==1){// Print out CS4272 registers
+  Serial.println("CS4272 registers after init");
+  for(unsigned int i = 1; i < 9; i++)
+  {
+    Wire.beginTransmission(CS4272_ADDR);
+    Wire.write(i);
+    int ii = Wire.endTransmission();
+    if(ii != 0)
+    {
+      Serial.println("Error in end transmission:");  Serial.println(ii);
+      break;
+    }
+    if(Wire.requestFrom(CS4272_ADDR,1) < 1)
+    {
+      Serial.println("Error in request from");
+      break;
+    }  
+    Serial.print(i);
+    Serial.print(" ");
+    Serial.println(Wire.read());
+  }
+}  
 }
 
 void loop(){
   switch (state){
     case State_Idle:
     readSerialData();  
+    break;
+      
+    case State_Acquire:
+    state=State_ISR;
+    i2s_start();
     break;
  
     case State_Transfer:
@@ -49,35 +74,14 @@ void loop(){
   }
 }
 
-void i2s1_tx_isr(void){
-// ----------------------------------------------------------------------
-// -- Write 1.5 kHz sine wave to DAC (= 48 kHz / 32 points per period) --
-// ----------------------------------------------------------------------
-    I2S1_TDR0 = 0;                                  // OUT_B
-    I2S1_TDR0 = (sine32_ref[(counter) & 0xFF])/2;   // OUT_A
-
-//  Data acquisition: (TODO)
-//  ina[counter] = (I2S1_RDR0);                     // IN_B
-//  ina[counter] = (I2S1_RDR0);                     // IN_A
-
-//  data1[datapts] = (((uint32_t)ina[counter])>>24)&0xFF;
-//  data2[datapts] = (((uint32_t)ina[counter])>>16)&0xFF;
-//  data3[datapts] = (((uint32_t)ina[counter])>>8)&0xFF; // channel A data, 24-bit signed integer left-justified on 32 bits
-// ----------------------------------------------------------------------
-
-  counter++;
-  if(counter % 2 == 0){datapts++;}  // Downsampling at subharmonic of fmod.  Change modulo integer  
-  if(datapts >= dataLength){i2s_stop(); state=State_Transfer;}  // if max points reached, stop
-}
-
 void transferData(){
-//  for(unsigned int i=0; i<dataLength; i++){  //  TODO: transfer data via USB to PC
+//  for(unsigned int i=0; i<dataLength; i++){  // transfer data via USB to PC
 //    Serial.write(data1[i]);  
 //    Serial.write(data2[i]);  
 //    Serial.write(data3[i]);  
 //  }           
 
-  Serial.println("Done!"); //  For now, send a message that let's us know we've finished
+  if(debug==1){Serial.println("Done!");} //  For now, send a message that let's us know we've finished
   Serial.flush();
   state = State_Idle;
 }
