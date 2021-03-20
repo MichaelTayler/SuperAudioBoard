@@ -62,9 +62,13 @@ void i2s_start() {
   I2S0_RCSR |= I2S_RCSR_RE | I2S_RCSR_FR;
 
   // TX: enable, bit clock enable, reset fifo, and interrupt on fifo req
-  //
   // Not sure if need bit clock enable for slave setup
   I2S0_TCSR |= I2S_TCSR_TE | I2S_TCSR_BCE | I2S_TCSR_FR | I2S_TCSR_FRIE;
+
+  //Reset counters
+  counter=0;
+  sinecounter=0;
+  datapts=0;
 
   // Load up TX FIFO so that the ISR isn't called immediately (with no
   // data available in RX fifo).  Four writes required to get data past
@@ -82,12 +86,8 @@ void i2s_start() {
 
 void i2s_stop() {
   __disable_irq();
-
   NVIC_DISABLE_IRQ(IRQ_I2S0_TX);
-  //NVIC_DISABLE_IRQ(IRQ_I2S0_RX);
-
   I2S0_TCSR &= ~I2S_TCSR_TE;
   I2S0_RCSR &= ~I2S_RCSR_RE;
-
   __enable_irq();
 }
