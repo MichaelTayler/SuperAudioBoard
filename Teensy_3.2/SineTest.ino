@@ -8,7 +8,8 @@ enum State {State_Idle, State_Aqcuire, State_ISR, State_Transfer, State_Flush};
 State state = State_Idle;
 
 volatile unsigned int counter;
-volatile int32_t ina[256];
+volatile int32_t ina[10000];
+byte debug=0;
 
 #include "Wire.h"
 #include "cs4272.h"
@@ -76,10 +77,10 @@ void i2s0_tx_isr(void){
 // -- Write 1.5 kHz sine wave to DAC (= 48 kHz / 32 points per period) --
 // ----------------------------------------------------------------------
     I2S0_TDR0 = 0;                                  // OUT_B
-    I2S0_TDR0 = (sine32_ref[(counter) & 0xFF])/2;   // OUT_A
+    I2S0_TDR0 = sine32_ref[sinecounter];            // OUT_A
 
 //  Data acquisition: (TODO)
-//  (I2S0_RDR0);                     // IN_B
+//  (I2S0_RDR0);                                    // IN_B
 //  ina[datapts] = (I2S0_RDR0);                     // IN_A
 // ----------------------------------------------------------------------
 
